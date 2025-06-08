@@ -16,4 +16,13 @@ export default defineConfig({
     assetsDir: 'assets',
   },
   base: '/',
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    server: {
+      deps: {
+        inline: ['vuetify'],
+      },
+    },
+  },
 })
