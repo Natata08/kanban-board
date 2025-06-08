@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run linting and formatting on staged files
+npx lint-staged
+
+# Run type checking
+npm run type-check
+
+# Run unit tests
+npm run test:unit -- --run
+
+# If anything failed, prevent the commit
+if [ $? -ne 0 ]; then
+  echo "❌ Tests failed. Commit aborted."
+  exit 1
+fi
+
+echo "✅ All checks passed. Committing changes."
