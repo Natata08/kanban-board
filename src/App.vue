@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import NavBar from './components/NavBar.vue'
+import AppFooter from './components/AppFooter.vue'
 
 const handleThemeChange = (isDark: boolean) => {
   console.log('Theme changed:', isDark)
@@ -15,6 +16,7 @@ const handleThemeChange = (isDark: boolean) => {
         <RouterView />
       </v-container>
     </v-main>
+    <AppFooter />
   </v-app>
 </template>
 

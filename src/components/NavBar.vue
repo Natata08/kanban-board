@@ -1,5 +1,5 @@
 <template>
-  <v-app-bar :elevation="1">
+  <v-app-bar elevation="1">
     <v-app-bar-title class="text-h6 text-md-h5">
       <v-icon icon="mdi-view-column-outline" class="me-2" />
       <span class="d-none d-sm-inline">Kanban Board</span>
