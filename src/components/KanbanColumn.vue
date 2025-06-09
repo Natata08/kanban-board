@@ -69,11 +69,12 @@ const handleDrop = (event: DragEvent) => {
 
 <style scoped>
 .kanban-column {
-  width: 18rem;
+  min-width: 18rem;
   margin: 0 0.5rem;
   display: flex;
   flex-direction: column;
   max-height: calc(100vh - 9.375rem);
+  flex-grow: 1;
 }
 
 .column-title {
