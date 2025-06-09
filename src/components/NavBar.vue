@@ -11,9 +11,9 @@
 
     <div class="d-none d-md-flex">
       <v-btn
-        icon="mdi-brightness-6"
+        :icon="themeIcon"
         variant="text"
-        @click="toggleTheme"
+        @click="toggleThemeWithEmit"
         aria-label="Toggle theme"
       />
       <v-btn
@@ -32,7 +32,7 @@
       </template>
 
       <v-list>
-        <v-list-item prepend-icon="mdi-brightness-6" @click="toggleTheme" title="Toggle Theme" />
+        <v-list-item :prepend-icon="themeIcon" @click="toggleThemeWithEmit" title="Toggle Theme" />
         <v-list-item
           prepend-icon="mdi-information-outline"
           @click="showInfo = true"
@@ -41,64 +41,29 @@
       </v-list>
     </v-menu>
 
-    <v-dialog v-model="showInfo" max-width="500">
-      <v-card>
-        <v-card-title>About Kanban Board</v-card-title>
-        <v-card-text>
-          <p>
-            This is a simple kanban board application built with Vue 3, TypeScript, and Vuetify.
-          </p>
-          <p class="mt-2">Features:</p>
-          <v-list density="compact" class="bg-transparent">
-            <v-list-item>
-              <template v-slot:prepend>
-                <v-icon icon="mdi-pencil" size="small" class="me-2" color="primary" />
-              </template>
-              Create, edit, and delete cards
-            </v-list-item>
-            <v-list-item>
-              <template v-slot:prepend>
-                <v-icon icon="mdi-drag" size="small" class="me-2" color="primary" />
-              </template>
-              Drag and drop cards between columns
-            </v-list-item>
-            <v-list-item>
-              <template v-slot:prepend>
-                <v-icon icon="mdi-database" size="small" class="me-2" color="primary" />
-              </template>
-              Data persistence using localStorage
-            </v-list-item>
-            <v-list-item>
-              <template v-slot:prepend>
-                <v-icon icon="mdi-responsive" size="small" class="me-2" color="primary" />
-              </template>
-              Responsive design for all screen sizes
-            </v-list-item>
-          </v-list>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn color="primary" variant="text" @click="showInfo = false">Close</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <AboutDialog v-model="showInfo" />
   </v-app-bar>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useThemeManager } from '../composables/useTheme'
+import IconKanban from './icons/IconKanban.vue'
+// import AboutDialog from './AboutDialog.vue'
+
+const menu = ref(false)
+const showInfo = ref(false)
+
+const { toggleTheme, isDark } = useThemeManager()
+
+const themeIcon = computed(() => (isDark.value ? 'mdi-weather-sunny' : 'mdi-weather-night'))
 
 const emit = defineEmits<{
-  (e: 'theme-change', isDark: boolean): void
+  (e: 'theme-change', value: boolean): void
 }>()
 
-const showInfo = ref(false)
-const menu = ref(false)
-
-const toggleTheme = () => {
-  emit('theme-change', true)
-  menu.value = false
+function toggleThemeWithEmit() {
+  toggleTheme()
+  emit('theme-change', isDark.value)
 }
 </script>
-
-<style scoped></style>
