@@ -66,4 +66,6 @@ function toggleThemeWithEmit() {
   toggleTheme()
   emit('theme-change', isDark.value)
 }
+
+defineExpose({ showInfo })
 </script>
