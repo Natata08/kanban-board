@@ -49,7 +49,7 @@
 import { ref, computed } from 'vue'
 import { useThemeManager } from '../composables/useTheme'
 import IconKanban from './icons/IconKanban.vue'
-// import AboutDialog from './AboutDialog.vue'
+import AboutDialog from './AboutDialog.vue'
 
 const menu = ref(false)
 const showInfo = ref(false)
