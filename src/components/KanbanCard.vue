@@ -61,7 +61,7 @@ const cardColor = computed(() => {
   if (theme.global.name.value === 'dark') {
     return 'grey-darken-3'
   }
-  return 'white'
+  return 'grey-lighten-5'
 })
 </script>
 
