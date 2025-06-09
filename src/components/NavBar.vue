@@ -1,8 +1,10 @@
 <template>
-  <v-app-bar elevation="1">
+  <v-app-bar :elevation="1">
     <v-app-bar-title class="text-h6 text-md-h5">
-      <v-icon icon="mdi-view-column-outline" class="me-2" />
-      <span class="d-none d-sm-inline">Kanban Board</span>
+      <div class="d-flex align-center">
+        <IconKanban class="me-2" :width="24" :height="24" aria-hidden="true" />
+        <span>Kanban Board</span>
+      </div>
     </v-app-bar-title>
 
     <v-spacer />
