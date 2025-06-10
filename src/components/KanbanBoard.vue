@@ -3,7 +3,7 @@
     <v-row>
       <v-col cols="12">
         <div class="d-flex justify-end mb-4">
-          <v-btn color="primary" @click="openAddCardDialog(null)" :loading="isLoading">
+          <v-btn color="primary" @click="openAddCardDialog(null)">
             <v-icon left>mdi-plus</v-icon>
             Add new task
           </v-btn>
