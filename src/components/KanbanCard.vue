@@ -9,6 +9,7 @@
             icon="mdi-pencil-outline"
             size="x-small"
             variant="text"
+            data-testid="edit-button"
             :aria-label="`Edit card: ${card.title}`"
             @click="$emit('edit', card.id)"
           />
@@ -16,6 +17,7 @@
             icon="mdi-delete-outline"
             size="x-small"
             variant="text"
+            data-testid="delete-button"
             :aria-label="`Delete card: ${card.title}`"
             @click="$emit('delete', card.id)"
           />
