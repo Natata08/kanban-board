@@ -1,7 +1,15 @@
 <template>
   <v-card class="kanban-column" :elevation="1" :border="true">
     <v-card-title class="column-title d-flex justify-space-between align-center">
-      <span class="text-primary">{{ column.title }}</span>
+      <h3 class="text-h6" data-testid="column-title">{{ column.title }}</h3>
+      <v-spacer></v-spacer>
+      <v-btn
+        icon="mdi-plus"
+        variant="text"
+        data-testid="add-card-button"
+        aria-label="Add new card"
+        @click="$emit('add-card', column.id)"
+      ></v-btn>
       <v-chip size="small">{{ column.cards?.length || 0 }}</v-chip>
     </v-card-title>
     <v-divider></v-divider>
