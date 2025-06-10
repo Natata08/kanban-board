@@ -1,12 +1,6 @@
 import { reactive, ref } from 'vue'
 import { kanbanService } from '@/services/kanbanService'
-import type {
-  KanbanBoard,
-  KanbanCard,
-  KanbanColumn,
-  CardCreationPayload,
-  CardUpdatePayload,
-} from '@/types/kanban'
+import type { KanbanBoard, KanbanCard, KanbanColumn, CardCreationPayload } from '@/types/kanban'
 
 const board = reactive<KanbanBoard>({ columns: [] })
 const isLoading = ref(false)
@@ -66,60 +60,87 @@ export function useKanbanStore() {
 
   const updateCard = async (payload: {
     id: string
-    title: string
-    description: string
-    columnId: string
+    title?: string
+    description?: string
+    columnId?: string
   }) => {
-    isLoading.value = true
-    try {
-      const original = findCardAndColumn(payload.id)
-      if (!original) throw new Error('Card not found')
+    const original = findCardAndColumn(payload.id)
+    if (!original) {
+      errorMessage.value = 'Failed to update card: Card not found.'
+      return
+    }
 
-      const cardUpdatePayload: CardUpdatePayload = {
-        id: payload.id,
-        title: payload.title,
-        description: payload.description,
-        column_id: payload.columnId,
+    const originalCardState = { ...original.card }
+    const originalColumn = original.column
+    const originalCardIndex = original.column.cards?.findIndex((c) => c.id === payload.id) ?? -1
+
+    const cardToUpdate = original.card
+    if (payload.title !== undefined) cardToUpdate.title = payload.title
+    if (payload.description !== undefined) cardToUpdate.description = payload.description
+
+    if (payload.columnId && payload.columnId !== original.column.id) {
+      const targetColumn = board.columns.find((col) => col.id === payload.columnId)
+      if (targetColumn && originalCardIndex > -1) {
+        original.column.cards?.splice(originalCardIndex, 1)
+        if (!targetColumn.cards) targetColumn.cards = []
+        cardToUpdate.column_id = payload.columnId
+        targetColumn.cards.push(cardToUpdate)
       }
-      await kanbanService.updateCard(payload.id, cardUpdatePayload)
+    }
 
-      original.card.title = payload.title
-      original.card.description = payload.description
+    try {
+      const { id, ...updateData } = payload
+      const servicePayload = {
+        title: updateData.title,
+        description: updateData.description,
+        column_id: updateData.columnId,
+      }
+      Object.keys(servicePayload).forEach(
+        (key) =>
+          servicePayload[key as keyof typeof servicePayload] === undefined &&
+          delete servicePayload[key as keyof typeof servicePayload],
+      )
 
-      if (original.column.id !== payload.columnId) {
-        const cardIndex = original.column.cards?.findIndex((c) => c.id === payload.id)
-        if (cardIndex !== undefined && cardIndex > -1) {
-          const [movedCard] = original.column.cards!.splice(cardIndex, 1)
-          const targetColumn = board.columns.find((col) => col.id === payload.columnId)
-          if (targetColumn) {
-            if (!targetColumn.cards) targetColumn.cards = []
-            movedCard.column_id = payload.columnId
-            targetColumn.cards.push(movedCard)
-          }
-        }
+      if (Object.keys(servicePayload).length > 0) {
+        await kanbanService.updateCard(id, servicePayload)
       }
     } catch (error) {
-      console.error('Error updating card:', error)
-      errorMessage.value = 'Failed to update card.'
-      await loadBoard()
-    } finally {
-      isLoading.value = false
+      console.error('Failed to update card:', error)
+      errorMessage.value = 'Failed to update card. Reverting changes.'
+
+      const current = findCardAndColumn(payload.id)
+      if (current && current.column) {
+        const currentCardIndex = current.column.cards?.findIndex((c) => c.id === payload.id) ?? -1
+        if (currentCardIndex > -1) {
+          const [cardToMoveBack] = current.column.cards!.splice(currentCardIndex, 1)
+          cardToMoveBack.title = originalCardState.title
+          cardToMoveBack.description = originalCardState.description
+          cardToMoveBack.column_id = originalCardState.column_id
+          originalColumn.cards?.splice(originalCardIndex, 0, cardToMoveBack)
+        }
+      }
     }
   }
 
   const deleteCard = async (cardId: string) => {
-    isLoading.value = true
+    const original = findCardAndColumn(cardId)
+    if (!original) return
+
+    const originalCard = { ...original.card }
+    const originalColumn = original.column
+    const originalIndex = original.column.cards?.findIndex((c) => c.id === cardId) ?? -1
+    if (originalIndex > -1) {
+      original.column.cards?.splice(originalIndex, 1)
+    }
+
     try {
       await kanbanService.deleteCard(cardId)
-      const original = findCardAndColumn(cardId)
-      if (original?.column?.cards) {
-        original.column.cards = original.column.cards.filter((c) => c.id !== cardId)
-      }
     } catch (error) {
-      console.error('Error deleting card:', error)
-      errorMessage.value = 'Failed to delete card.'
-    } finally {
-      isLoading.value = false
+      console.error('Failed to delete card:', error)
+      errorMessage.value = 'Failed to delete card. Reverting changes.'
+      if (originalIndex > -1) {
+        originalColumn.cards?.splice(originalIndex, 0, originalCard)
+      }
     }
   }
 

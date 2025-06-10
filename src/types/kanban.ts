@@ -23,20 +23,9 @@ export interface KanbanBoard {
   columns: KanbanColumn[]
 }
 
-export interface CardCreationPayload {
-  title: string
-  description: string
-  column_id: string
-  position: number
-}
+export type CardCreationPayload = Omit<KanbanCard, 'id' | 'created_at'>
 
-export interface CardUpdatePayload {
-  id: string
-  title?: string
-  description?: string
-  column_id?: string
-  position?: number
-}
+export type CardUpdatePayload = Partial<Omit<KanbanCard, 'id' | 'created_at'>>
 
 export interface DragDropPayload {
   cardId: string
