@@ -1,5 +1,5 @@
 <template>
-  <v-footer app color="surface" border class="bg-dark text-center">
+  <v-footer color="surface" border class="bg-dark text-center">
     <v-container class="pa-0">
       <div class="d-flex justify-center">
         <v-btn

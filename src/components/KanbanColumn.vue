@@ -73,7 +73,6 @@ const handleDrop = (event: DragEvent) => {
   margin: 0.5rem 0;
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 9.375rem);
   flex-grow: 1;
   flex-shrink: 0;
   min-width: 0;
@@ -94,7 +93,7 @@ const handleDrop = (event: DragEvent) => {
 
 .column-content {
   padding: 0.5rem;
-  overflow-y: auto;
+  padding-bottom: 1rem;
   flex-grow: 1;
 }
 
