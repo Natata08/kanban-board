@@ -12,6 +12,7 @@
         v-for="column in board.columns"
         :key="column.id"
         :column="column"
+        @delete-card="handleDeleteCard"
         @card-moved="handleCardMoved"
       />
     </div>
@@ -21,7 +22,7 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 import KanbanColumn from '@/components/KanbanColumn.vue'
-import type { KanbanBoard } from '@/types/kanban'
+import type { KanbanBoard, KanbanCard, KanbanColumn as KanbanColumnType } from '@/types/kanban'
 
 const generateId = () => `id_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
 
@@ -70,6 +71,25 @@ const board = reactive<KanbanBoard>({
   ],
 })
 
+const findCardAndColumn = (
+  cardId: string,
+): { card: KanbanCard; column: KanbanColumnType } | null => {
+  for (const column of board.columns) {
+    const card = column.cards.find((c) => c.id === cardId)
+    if (card) {
+      return { card, column }
+    }
+  }
+  return null
+}
+
+const handleDeleteCard = (cardId: string) => {
+  const result = findCardAndColumn(cardId)
+  if (result) {
+    result.column.cards = result.column.cards.filter((c) => c.id !== cardId)
+  }
+}
+
 const handleCardMoved = (payload: { cardId: string; fromColumnId: string; toColumnId: string }) => {
   const fromColumn = board.columns.find((col) => col.id === payload.fromColumnId)
   const toColumn = board.columns.find((col) => col.id === payload.toColumnId)
@@ -91,7 +111,7 @@ const handleCardMoved = (payload: { cardId: string; fromColumnId: string; toColu
 .kanban-board-columns {
   align-items: flex-start;
   gap: 0.5rem;
-  padding-bottom: 1rem;
+  padding-bottom: 1rem; /* Space for scrollbar */
   flex-wrap: wrap;
   justify-content: space-evenly;
 }
