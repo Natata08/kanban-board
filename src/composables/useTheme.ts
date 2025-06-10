@@ -1,5 +1,5 @@
 import { ref, onMounted, watch, onUnmounted, type Ref } from 'vue'
-import { useTheme } from 'vuetify'
+import { useTheme as useVuetifyTheme } from 'vuetify'
 
 const STORAGE_KEY = 'kanban-theme-preference'
 
@@ -33,7 +33,7 @@ export function useThemeManager(): {
   isDark: Ref<boolean>
   toggleTheme: () => void
 } {
-  const vuetifyTheme = useTheme()
+  const vuetifyTheme = useVuetifyTheme()
   const isDark = ref(vuetifyTheme.global.name.value === 'dark')
 
   let mediaQueryList: MediaQueryList | null = null
