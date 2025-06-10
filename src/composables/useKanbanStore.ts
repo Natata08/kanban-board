@@ -128,32 +128,44 @@ export function useKanbanStore() {
     fromColumnId: string
     toColumnId: string
   }) => {
-    isLoading.value = true
+    errorMessage.value = ''
+
+    const fromColumn = board.columns.find((col) => col.id === payload.fromColumnId)
+    const toColumn = board.columns.find((col) => col.id === payload.toColumnId)
+
+    if (!fromColumn || !toColumn) {
+      errorMessage.value = 'Invalid column specified for move.'
+      return
+    }
+
+    const cardIndex = fromColumn.cards?.findIndex((c) => c.id === payload.cardId) ?? -1
+    if (cardIndex === -1 || !fromColumn.cards) {
+      errorMessage.value = 'Card not found in source column.'
+      return
+    }
+
+    const originalFromCards = [...fromColumn.cards]
+    const originalToCards = toColumn.cards ? [...toColumn.cards] : []
+
+    const [optimisticallyMovedCard] = fromColumn.cards.splice(cardIndex, 1)
+    if (!toColumn.cards) {
+      toColumn.cards = []
+    }
+    optimisticallyMovedCard.column_id = payload.toColumnId
+
+    const newPosition =
+      toColumn.cards.length > 0 ? Math.max(0, ...toColumn.cards.map((c) => c.position)) + 1 : 0
+    optimisticallyMovedCard.position = newPosition
+    toColumn.cards.push(optimisticallyMovedCard)
+
     try {
-      const fromColumn = board.columns.find((col) => col.id === payload.fromColumnId)
-      const toColumn = board.columns.find((col) => col.id === payload.toColumnId)
-      if (!fromColumn || !toColumn) throw new Error('Column not found')
-
-      const cardIndex = fromColumn.cards?.findIndex((c) => c.id === payload.cardId)
-      if (cardIndex === undefined || cardIndex < 0)
-        throw new Error('Card not found in source column')
-
-      const newPosition = toColumn.cards?.length
-        ? Math.max(...toColumn.cards.map((c) => c.position)) + 1
-        : 0
       await kanbanService.moveCard(payload.cardId, payload.toColumnId, newPosition)
-
-      const [cardToMove] = fromColumn.cards!.splice(cardIndex, 1)
-      if (!toColumn.cards) toColumn.cards = []
-      cardToMove.column_id = payload.toColumnId
-      cardToMove.position = newPosition
-      toColumn.cards.push(cardToMove)
     } catch (error) {
       console.error('Error moving card:', error)
-      errorMessage.value = 'Failed to move card.'
-      await loadBoard()
-    } finally {
-      isLoading.value = false
+      errorMessage.value = 'Failed to move card. Reverting local changes.'
+
+      fromColumn.cards = originalFromCards
+      toColumn.cards = originalToCards
     }
   }
 
