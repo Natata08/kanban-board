@@ -196,4 +196,72 @@ describe('useKanbanStore', () => {
       expect(errorMessage.value).toBe('')
     })
   })
+
+  describe('updateCard', () => {
+    it('optimistically updates a card and calls the service', async () => {
+      const cardToUpdate = {
+        id: 'card1',
+        title: 'Old Title',
+        description: 'Old Desc',
+        column_id: 'col1',
+        position: 0,
+        created_at: 'date',
+      }
+      board.columns = [{ id: 'col1', title: 'To Do', position: 0, cards: [cardToUpdate] }]
+
+      const updatedCardPayload = {
+        id: 'card1',
+        title: 'New Title',
+      }
+
+      vi.mocked(kanbanService.updateCard).mockResolvedValue(undefined)
+
+      const store = useKanbanStore()
+      await store.updateCard(updatedCardPayload)
+
+      expect(kanbanService.updateCard).toHaveBeenCalledWith(
+        'card1',
+        expect.objectContaining({
+          title: 'New Title',
+        }),
+      )
+      expect(board.columns[0].cards![0].title).toBe(updatedCardPayload.title)
+      expect(board.columns[0].cards![0].description).toBe('Old Desc')
+      expect(errorMessage.value).toBe('')
+    })
+
+    it('reverts state if the update call fails', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const cardToUpdate = {
+        id: 'card1',
+        title: 'Old Title',
+        description: 'Old Desc',
+        column_id: 'col1',
+        position: 0,
+        created_at: 'date',
+      }
+      board.columns = [{ id: 'col1', title: 'To Do', position: 0, cards: [cardToUpdate] }]
+
+      const updatedCardPayload = {
+        id: 'card1',
+        title: 'New Title',
+      }
+
+      vi.mocked(kanbanService.updateCard).mockRejectedValue(new Error('API Error'))
+
+      const store = useKanbanStore()
+      await store.updateCard(updatedCardPayload)
+
+      expect(kanbanService.updateCard).toHaveBeenCalledWith(
+        'card1',
+        expect.objectContaining({
+          title: 'New Title',
+        }),
+      )
+      expect(board.columns[0].cards![0].title).toBe('Old Title')
+      expect(board.columns[0].cards![0].description).toBe('Old Desc')
+      expect(errorMessage.value).toContain('Failed to update card')
+      consoleErrorSpy.mockRestore()
+    })
+  })
 })
