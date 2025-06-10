@@ -100,6 +100,11 @@ const rules = {
   required: (value: string) => !!value || 'This field is required.',
 }
 
+defineExpose({
+  cardFormRef,
+  formData,
+})
+
 watch(
   () => props.modelValue,
   (newValue) => {
