@@ -34,57 +34,15 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import KanbanColumn from '@/components/KanbanColumn.vue'
 import CardDialog from '@/components/CardDialog.vue'
+import { kanbanService } from '@/services/kanbanService'
 import type { KanbanBoard, KanbanCard, KanbanColumn as KanbanColumnType } from '@/types/kanban'
 
-const generateId = () => `id_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-
-const board = reactive<KanbanBoard>({
-  columns: [
-    {
-      id: generateId(),
-      title: 'To Do',
-      cards: [
-        {
-          id: generateId(),
-          title: 'Task 1',
-          description: 'Description for task 1',
-          createdAt: new Date(),
-        },
-        {
-          id: generateId(),
-          title: 'Task 2',
-          description: 'Description for task 2',
-          createdAt: new Date(),
-        },
-      ],
-    },
-    {
-      id: generateId(),
-      title: 'In Progress',
-      cards: [],
-    },
-    {
-      id: generateId(),
-      title: 'Review',
-      cards: [
-        {
-          id: generateId(),
-          title: 'Task 3',
-          description: 'Description for task 3',
-          createdAt: new Date(),
-        },
-      ],
-    },
-    {
-      id: generateId(),
-      title: 'Done',
-      cards: [],
-    },
-  ],
-})
+const board = reactive<KanbanBoard>({ columns: [] })
+const isLoading = ref(false)
+const errorMessage = ref('')
 
 const cardDialogDefaultState = {
   show: false,
@@ -94,11 +52,30 @@ const cardDialogDefaultState = {
 }
 const cardDialog = reactive({ ...cardDialogDefaultState })
 
+onMounted(() => {
+  loadBoard()
+})
+
+async function loadBoard() {
+  isLoading.value = true
+  errorMessage.value = ''
+
+  try {
+    const data = await kanbanService.fetchCompleteBoard()
+    board.columns = data.columns
+  } catch (error) {
+    console.error('Failed to load board:', error)
+    errorMessage.value = 'Failed to load board. Please try again.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
 const findCardAndColumn = (
   cardId: string,
 ): { card: KanbanCard; column: KanbanColumnType } | null => {
   for (const column of board.columns) {
-    const card = column.cards.find((c) => c.id === cardId)
+    const card = column.cards?.find((c) => c.id === cardId)
     if (card) {
       return { card, column }
     }
@@ -131,69 +108,143 @@ const closeCardDialog = () => {
   cardDialog.show = false
 }
 
-const handleSaveCard = (payload: {
+const handleSaveCard = async (payload: {
   card: Partial<KanbanCard> & { title: string; description: string }
   targetColumnId: string
   originalCardId?: string
 }) => {
-  if (payload.originalCardId) {
-    const result = findCardAndColumn(payload.originalCardId)
-    if (result) {
-      result.card.title = payload.card.title
-      result.card.description = payload.card.description
-      result.card.updatedAt = new Date()
+  isLoading.value = true
 
-      if (result.column.id !== payload.targetColumnId) {
-        const cardIndex = result.column.cards.findIndex((c) => c.id === payload.originalCardId)
-        if (cardIndex !== -1) {
-          const [movedCard] = result.column.cards.splice(cardIndex, 1)
+  try {
+    if (payload.originalCardId) {
+      const result = findCardAndColumn(payload.originalCardId)
 
+      if (result) {
+        await kanbanService.updateCard(payload.originalCardId, {
+          id: payload.originalCardId,
+          title: payload.card.title,
+          description: payload.card.description,
+          column_id: payload.targetColumnId,
+        })
+
+        if (result.column.id !== payload.targetColumnId) {
           const targetColumn = board.columns.find((col) => col.id === payload.targetColumnId)
-          if (targetColumn) {
-            targetColumn.cards.push(movedCard)
+          const position = targetColumn?.cards?.length
+            ? Math.max(...targetColumn.cards.map((c) => c.position)) + 1
+            : 0
+
+          await kanbanService.moveCard(payload.originalCardId, payload.targetColumnId, position)
+
+          const cardIndex = result.column.cards?.findIndex((c) => c.id === payload.originalCardId)
+          if (cardIndex !== undefined && cardIndex !== -1) {
+            const [movedCard] = result.column.cards?.splice(cardIndex, 1) || []
+
+            const targetColumn = board.columns.find((col) => col.id === payload.targetColumnId)
+            if (targetColumn && movedCard) {
+              if (!targetColumn.cards) targetColumn.cards = []
+              targetColumn.cards.push({
+                ...movedCard,
+                title: payload.card.title,
+                description: payload.card.description,
+                column_id: payload.targetColumnId,
+              })
+            }
+          }
+        } else {
+          if (result.card) {
+            result.card.title = payload.card.title
+            result.card.description = payload.card.description
           }
         }
       }
-    }
-  } else {
-    const targetColumn = board.columns.find((col) => col.id === payload.targetColumnId)
-    if (targetColumn) {
-      const newCard: KanbanCard = {
-        id: generateId(),
-        title: payload.card.title,
-        description: payload.card.description,
-        createdAt: new Date(),
+    } else {
+      const targetColumn = board.columns.find((col) => col.id === payload.targetColumnId)
+
+      if (targetColumn) {
+        const position = targetColumn.cards?.length
+          ? Math.max(...targetColumn.cards.map((c) => c.position)) + 1
+          : 0
+
+        const newCard = await kanbanService.createCard({
+          title: payload.card.title,
+          description: payload.card.description,
+          column_id: payload.targetColumnId,
+          position,
+        })
+
+        if (!targetColumn.cards) targetColumn.cards = []
+        targetColumn.cards.push(newCard)
       }
-      targetColumn.cards.push(newCard)
     }
-  }
-  closeCardDialog()
-}
-
-const handleDeleteCard = (cardId: string) => {
-  const result = findCardAndColumn(cardId)
-  if (result) {
-    result.column.cards = result.column.cards.filter((c) => c.id !== cardId)
+  } catch (error) {
+    console.error('Error saving card:', error)
+    errorMessage.value = 'Failed to save card. Please try again.'
+  } finally {
+    isLoading.value = false
+    closeCardDialog()
   }
 }
 
-const handleCardMoved = (payload: { cardId: string; fromColumnId: string; toColumnId: string }) => {
-  const fromColumn = board.columns.find((col) => col.id === payload.fromColumnId)
-  const toColumn = board.columns.find((col) => col.id === payload.toColumnId)
+const handleDeleteCard = async (cardId: string) => {
+  isLoading.value = true
 
-  if (fromColumn && toColumn) {
-    const cardIndex = fromColumn.cards.findIndex((c) => c.id === payload.cardId)
-    if (cardIndex > -1) {
-      const [cardToMove] = fromColumn.cards.splice(cardIndex, 1)
-      toColumn.cards.push(cardToMove)
+  try {
+    await kanbanService.deleteCard(cardId)
+
+    const result = findCardAndColumn(cardId)
+    if (result?.column?.cards) {
+      result.column.cards = result.column.cards.filter((c) => c.id !== cardId)
     }
+  } catch (error) {
+    console.error('Error deleting card:', error)
+    errorMessage.value = 'Failed to delete card. Please try again.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const handleCardMoved = async (payload: {
+  cardId: string
+  fromColumnId: string
+  toColumnId: string
+}) => {
+  isLoading.value = true
+
+  try {
+    const fromColumn = board.columns.find((col) => col.id === payload.fromColumnId)
+    const toColumn = board.columns.find((col) => col.id === payload.toColumnId)
+
+    if (fromColumn && toColumn) {
+      const cardIndex = fromColumn.cards?.findIndex((c) => c.id === payload.cardId) ?? -1
+
+      if (cardIndex > -1 && fromColumn.cards) {
+        const newPosition = toColumn.cards?.length
+          ? Math.max(...toColumn.cards.map((c) => c.position)) + 1
+          : 0
+
+        await kanbanService.moveCard(payload.cardId, payload.toColumnId, newPosition)
+
+        const [cardToMove] = fromColumn.cards.splice(cardIndex, 1)
+        if (!toColumn.cards) toColumn.cards = []
+        toColumn.cards.push({
+          ...cardToMove,
+          column_id: payload.toColumnId,
+          position: newPosition,
+        })
+      }
+    }
+  } catch (error) {
+    console.error('Error moving card:', error)
+    errorMessage.value = 'Failed to move card. Please try again.'
+    loadBoard()
+  } finally {
+    isLoading.value = false
   }
 }
 </script>
 
 <style scoped>
 .kanban-board {
-  height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;
