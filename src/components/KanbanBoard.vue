@@ -42,6 +42,8 @@
       :available-columns="store.board.columns"
       @save-card="handleSaveCard"
     />
+
+    <ConfirmationDialog />
   </div>
 </template>
 
@@ -49,12 +51,15 @@
 import { onMounted } from 'vue'
 import KanbanColumn from '@/components/KanbanColumn.vue'
 import CardDialog from '@/components/CardDialog.vue'
+import ConfirmationDialog from '@/components/ConfirmationDialog.vue'
 import { useKanbanStore } from '@/composables/useKanbanStore'
 import { useCardDialog } from '@/composables/useCardDialog'
+import { useConfirmationDialog } from '@/composables/useConfirmationDialog'
 import type { KanbanCard } from '@/types/kanban'
 
 const store = useKanbanStore()
 const dialog = useCardDialog()
+const confirmDialog = useConfirmationDialog()
 
 onMounted(() => {
   store.loadBoard()
@@ -94,8 +99,17 @@ const handleSaveCard = async (payload: {
   dialog.close()
 }
 
-const handleDeleteCard = async (cardId: string) => {
-  await store.deleteCard(cardId)
+const handleDeleteCard = (cardId: string) => {
+  const result = store.findCardAndColumn(cardId)
+  if (result) {
+    confirmDialog.open(
+      'Delete Card',
+      `Are you sure you want to delete the card "${result.card.title}"? This action cannot be undone.`,
+      () => {
+        store.deleteCard(cardId)
+      },
+    )
+  }
 }
 
 const handleCardMoved = async (payload: {
