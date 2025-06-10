@@ -12,21 +12,27 @@
         <v-list density="compact" class="bg-transparent">
           <v-list-item>
             <template v-slot:prepend>
-              <v-icon color="primary" icon="mdi-check" />
+              <v-icon color="primary" icon="mdi-view-column-outline" />
             </template>
             Create and manage tasks in columns
           </v-list-item>
           <v-list-item>
             <template v-slot:prepend>
-              <v-icon color="primary" icon="mdi-check" />
+              <v-icon color="primary" icon="mdi-drag-variant" />
             </template>
             Drag and drop cards between columns
           </v-list-item>
           <v-list-item>
             <template v-slot:prepend>
-              <v-icon color="primary" icon="mdi-check" />
+              <v-icon color="primary" icon="mdi-theme-light-dark" />
             </template>
             Light and dark theme support
+          </v-list-item>
+          <v-list-item>
+            <template v-slot:prepend>
+              <v-icon color="primary" icon="mdi-database" />
+            </template>
+            Data persistence with Supabase
           </v-list-item>
         </v-list>
       </v-card-text>
