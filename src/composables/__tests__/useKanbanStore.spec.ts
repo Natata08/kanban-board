@@ -121,4 +121,51 @@ describe('useKanbanStore', () => {
       expect(errorMessage.value).toBe('')
     })
   })
+
+  describe('deleteCard', () => {
+    it('optimistically removes a card and calls the service', async () => {
+      const cardToDelete = {
+        id: 'card1',
+        title: 'Old Title',
+        description: 'Old Desc',
+        column_id: 'col1',
+        position: 0,
+        created_at: 'date',
+      }
+      board.columns = [{ id: 'col1', title: 'To Do', position: 0, cards: [cardToDelete] }]
+
+      vi.mocked(kanbanService.deleteCard).mockResolvedValue(undefined)
+
+      const store = useKanbanStore()
+      await store.deleteCard('card1')
+
+      expect(kanbanService.deleteCard).toHaveBeenCalledWith('card1')
+      expect(board.columns[0].cards).toHaveLength(0)
+      expect(errorMessage.value).toBe('')
+    })
+
+    it('reverts state if the delete call fails', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+      const cardToDelete = {
+        id: 'card1',
+        title: 'Old Title',
+        description: 'Old Desc',
+        column_id: 'col1',
+        position: 0,
+        created_at: 'date',
+      }
+      board.columns = [{ id: 'col1', title: 'To Do', position: 0, cards: [cardToDelete] }]
+
+      vi.mocked(kanbanService.deleteCard).mockRejectedValue(new Error('API Error'))
+
+      const store = useKanbanStore()
+      await store.deleteCard('card1')
+
+      expect(kanbanService.deleteCard).toHaveBeenCalledWith('card1')
+      expect(board.columns[0].cards).toHaveLength(1)
+      expect(board.columns[0].cards![0].id).toBe('card1')
+      expect(errorMessage.value).toContain('Failed to delete card')
+      consoleErrorSpy.mockRestore()
+    })
+  })
 })
