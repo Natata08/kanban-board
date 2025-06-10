@@ -25,7 +25,6 @@ export function useCardDialog() {
 
   const close = () => {
     state.show = false
-    // Reset state for next use
     state.isEditMode = false
     state.cardData = null
     state.targetColumnId = null
