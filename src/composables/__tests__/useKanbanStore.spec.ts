@@ -168,4 +168,32 @@ describe('useKanbanStore', () => {
       consoleErrorSpy.mockRestore()
     })
   })
+
+  describe('moveCard', () => {
+    it('optimistically moves a card between columns', async () => {
+      const cardToMove = {
+        id: 'card1',
+        title: 'Task',
+        description: 'Desc',
+        column_id: 'col1',
+        position: 0,
+        created_at: 'date',
+      }
+      board.columns = [
+        { id: 'col1', title: 'To Do', position: 0, cards: [cardToMove] },
+        { id: 'col2', title: 'In Progress', position: 1, cards: [] },
+      ]
+
+      vi.mocked(kanbanService.moveCard).mockResolvedValue(undefined)
+
+      const store = useKanbanStore()
+      await store.moveCard({ cardId: 'card1', fromColumnId: 'col1', toColumnId: 'col2' })
+
+      expect(kanbanService.moveCard).toHaveBeenCalledWith('card1', 'col2', 0)
+      expect(board.columns[0].cards).toHaveLength(0)
+      expect(board.columns[1].cards).toHaveLength(1)
+      expect(board.columns[1].cards![0].id).toBe('card1')
+      expect(errorMessage.value).toBe('')
+    })
+  })
 })
