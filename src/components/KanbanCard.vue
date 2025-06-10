@@ -46,7 +46,9 @@ defineEmits<{
 }>()
 
 const formattedDate = computed(() => {
-  return new Date(props.card.createdAt).toLocaleDateString(undefined, {
+  if (!props.card.created_at) return 'Unknown date'
+
+  return new Date(props.card.created_at).toLocaleDateString(undefined, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

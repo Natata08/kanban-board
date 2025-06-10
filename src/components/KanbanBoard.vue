@@ -3,12 +3,24 @@
     <v-row>
       <v-col cols="12">
         <div class="d-flex justify-end mb-4">
-          <v-btn color="primary" @click="openAddCardDialog(null)">
+          <v-btn color="primary" @click="openAddCardDialog(null)" :loading="isLoading">
             <v-icon left>mdi-plus</v-icon>
             Add new task
           </v-btn>
         </div>
-        <div class="kanban-board-columns d-flex">
+
+        <div v-if="isLoading" class="d-flex justify-center my-8">
+          <v-progress-circular indeterminate color="primary" />
+        </div>
+
+        <div v-else-if="errorMessage" class="d-flex justify-center my-8">
+          <v-alert type="error" class="ma-0">
+            {{ errorMessage }}
+            <v-btn class="ms-2" variant="text" @click="loadBoard">Retry</v-btn>
+          </v-alert>
+        </div>
+
+        <div v-else class="kanban-board-columns d-flex">
           <KanbanColumn
             v-for="column in board.columns"
             :key="column.id"

@@ -8,7 +8,6 @@ import type {
 } from '@/types/kanban'
 
 export const kanbanService = {
-  // Column operations - limited to just fetching
   async fetchColumns(): Promise<KanbanColumn[]> {
     const { data, error } = await supabase
       .from('columns')
@@ -23,7 +22,6 @@ export const kanbanService = {
     return data as KanbanColumn[]
   },
 
-  // Card operations
   async fetchCards(columnId?: string): Promise<KanbanCard[]> {
     let query = supabase.from('cards').select('*').order('position', { ascending: true })
 
@@ -42,13 +40,9 @@ export const kanbanService = {
   },
 
   async fetchCompleteBoard(): Promise<KanbanBoard> {
-    // Get all columns
     const columns = await this.fetchColumns()
-
-    // Get all cards
     const cards = await this.fetchCards()
 
-    // Group cards by column_id
     const cardsByColumn: Record<string, KanbanCard[]> = {}
 
     for (const card of cards) {
@@ -58,7 +52,6 @@ export const kanbanService = {
       cardsByColumn[card.column_id].push(card)
     }
 
-    // Add cards to their respective columns
     const columnsWithCards = columns.map((column) => ({
       ...column,
       cards: cardsByColumn[column.id] || [],
@@ -97,7 +90,6 @@ export const kanbanService = {
   },
 
   async moveCard(cardId: string, toColumnId: string, newPosition: number): Promise<void> {
-    // Update the card with new column and position
     const { error: updateError } = await supabase
       .from('cards')
       .update({ column_id: toColumnId, position: newPosition })

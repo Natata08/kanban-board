@@ -2,13 +2,13 @@
   <v-card class="kanban-column" :elevation="1" :border="true">
     <v-card-title class="column-title d-flex justify-space-between align-center">
       <span class="text-primary">{{ column.title }}</span>
-      <v-chip size="small">{{ column.cards.length }}</v-chip>
+      <v-chip size="small">{{ column.cards?.length || 0 }}</v-chip>
     </v-card-title>
     <v-divider></v-divider>
     <v-card-text class="column-content">
       <div class="cards-container" @dragover.prevent @drop.prevent="handleDrop">
         <KanbanCard
-          v-for="card in column.cards"
+          v-for="card in column.cards || []"
           :key="card.id"
           :card="card"
           draggable="true"
@@ -18,7 +18,7 @@
           class="mb-3"
         />
         <div
-          v-if="!column.cards.length"
+          v-if="!(column.cards && column.cards.length)"
           class="empty-column-message text-center text-disabled pa-4"
         >
           No cards in this column.
