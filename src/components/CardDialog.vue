@@ -2,7 +2,9 @@
   <v-dialog :model-value="modelValue" max-width="500px" persistent @update:model-value="emitClose">
     <v-card>
       <v-card-title>
-        <span class="text-h5">{{ isEditMode ? 'Edit Card' : 'Add New Card' }}</span>
+        <span class="text-h5" data-testid="card-dialog-title">{{
+          isEditMode ? 'Edit Card' : 'Add New Card'
+        }}</span>
       </v-card-title>
       <v-card-text>
         <v-form ref="cardFormRef" @submit.prevent="handleFormSubmit">
@@ -13,6 +15,7 @@
             required
             class="mb-2"
             autofocus
+            data-testid="card-title-input"
           ></v-text-field>
           <v-textarea
             v-model="formData.description"
@@ -20,6 +23,7 @@
             :rules="[rules.required]"
             required
             class="mb-2"
+            data-testid="card-description-input"
           ></v-textarea>
           <v-select
             v-model="formData.targetColumnId"
@@ -30,13 +34,23 @@
             :rules="[rules.required]"
             required
             class="mb-2"
+            data-testid="card-column-select"
           ></v-select>
         </v-form>
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="blue-darken-1" text @click="emitClose">Cancel</v-btn>
-        <v-btn color="blue-darken-1" :loading="loading" text @click="handleFormSubmit">Save</v-btn>
+        <v-btn color="blue-darken-1" text @click="emitClose" data-testid="card-cancel-button"
+          >Cancel</v-btn
+        >
+        <v-btn
+          color="blue-darken-1"
+          :loading="loading"
+          text
+          @click="handleFormSubmit"
+          data-testid="card-save-button"
+          >Save</v-btn
+        >
       </v-card-actions>
     </v-card>
   </v-dialog>
