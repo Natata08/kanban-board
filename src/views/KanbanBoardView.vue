@@ -111,8 +111,8 @@ const handleCardMoved = (payload: { cardId: string; fromColumnId: string; toColu
 .kanban-board-columns {
   align-items: flex-start;
   gap: 0.5rem;
-  padding-bottom: 1rem; /* Space for scrollbar */
+  padding-bottom: 1rem;
   flex-wrap: wrap;
-  justify-content: space-evenly;
+  justify-content: center;
 }
 </style>
