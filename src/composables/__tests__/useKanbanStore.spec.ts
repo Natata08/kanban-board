@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { useKanbanStore } from '../useKanbanStore'
 import { kanbanService } from '@/services/kanbanService'
+import type { KanbanCard } from '@/types/kanban'
 
 vi.mock('@/services/kanbanService', () => ({
   kanbanService: {
@@ -81,6 +82,43 @@ describe('useKanbanStore', () => {
       expect(board.columns).toEqual([])
 
       consoleErrorSpy.mockRestore()
+    })
+  })
+
+  describe('createCard', () => {
+    it('optimistically adds a new card and call the service', async () => {
+      const initialColumn = { id: 'col1', title: 'To Do', position: 0, cards: [] }
+      board.columns = [initialColumn]
+
+      const newCardPayload = {
+        title: 'New Task',
+        description: 'A task to be done',
+        columnId: 'col1',
+      }
+      const newCardFromApi: KanbanCard = {
+        id: 'card-new',
+        title: newCardPayload.title,
+        description: newCardPayload.description,
+        column_id: newCardPayload.columnId,
+        position: 0,
+        created_at: new Date().toISOString(),
+      }
+
+      vi.mocked(kanbanService.createCard).mockResolvedValue(newCardFromApi)
+
+      const store = useKanbanStore()
+      await store.createCard(newCardPayload)
+
+      expect(kanbanService.createCard).toHaveBeenCalledWith({
+        title: newCardPayload.title,
+        description: newCardPayload.description,
+        column_id: newCardPayload.columnId,
+        position: 0,
+      })
+
+      expect(board.columns[0].cards).toHaveLength(1)
+      expect(board.columns[0].cards![0].id).toBe(newCardFromApi.id)
+      expect(errorMessage.value).toBe('')
     })
   })
 })
