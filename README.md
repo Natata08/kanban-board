@@ -4,7 +4,7 @@ A modern, responsive, and feature-rich Kanban board application built with Vue 3
 
 **[🚀 Live Demo](https://kanban-board-azure-ten.vercel.app)**
 
-[Kanban Board Video](./public/kanban-demo.gif)
+![Kanban Board Video](./public/kanban-video.gif)
 
 ## ✨ Key Features
 
