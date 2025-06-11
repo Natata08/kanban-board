@@ -1,7 +1,7 @@
 <template>
   <v-card class="kanban-column" :elevation="1" :border="true">
     <v-card-title class="column-title d-flex justify-space-between align-center">
-      <h3 class="text-h6" data-testid="column-title">{{ column.title }}</h3>
+      <h3 class="text-h6 text-primary" data-testid="column-title">{{ column.title }}</h3>
       <v-spacer></v-spacer>
       <v-btn
         icon="mdi-plus"
